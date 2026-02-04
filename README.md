@@ -52,6 +52,7 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 
 ## Test data
 1- Download the test data from [[Here]](https://lstneuro-my.sharepoint.com/:f:/g/personal/ariosky_neuroinformatics-collaboratory_org/IgAW2KHcsUCKT5L1pXGg5tSFAbRyuXSyNBcjEuSt2EUATTw?e=k6sO5x)
+
 2- Unzip the file in the project directory
  
 
