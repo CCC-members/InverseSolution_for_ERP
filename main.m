@@ -227,7 +227,7 @@ for i=1:length(subjects)
         if(~isfolder(out_path))
             mkdir(out_path);
         end
-        save(fullfile(out_path,strcat('EEG_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'-struct','out');
+        save(fullfile(out_path,strcat('Times_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'-struct','out','-v7.3');
 
         disp('--------------------------------------------------------------------------');
         disp('--------------------------------------------------------------------------');
