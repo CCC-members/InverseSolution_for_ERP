@@ -34,6 +34,20 @@ if(~isempty(select_list))
                         OutEEGs(count)      = eeg_checkset(newEEG);
                         count               = count + 1;
                     end
+
+                case 'continue'
+                    regions                 = get_regions(events,event_id,EEG.pnts,EEG.srate);
+                    times                   = [regions.start; regions.end]';
+                    for j=1:size(times,1)
+                        time                = times(j,:);
+                        newEEG              = pop_select(EEG, 'time', time);
+                        newEEG.condition    = event_id;
+                        newEEGs(j)          = newEEG;
+                    end
+                    mergedEEG = pop_mergeset(newEEGs, [1:length(newEEGs)]);
+                    mergedEEG.segment   = 1;
+                    OutEEGs(count)      = eeg_checkset(mergedEEG);
+                    count               = count + 1;
                     
                 case 'trials'
                     seg_time = str2double(strrep(selection.time,'s',''));
