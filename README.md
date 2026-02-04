@@ -48,7 +48,7 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 4- Gonzalez-Moreira, E., Paz-Linares, D., Areces-Gonzalez, A., Wang, R., Bosch-Bayard, J., Bringas-Vega, M.L. and Valdes-Sosa, P.A., 2018. Caulking the leakage effect in MEEG source connectivity analysis. arXiv preprint arXiv:1810.00786.
 
 ## Dependencies
-1- EEGLAB (version 2024 or highier)
+1- EEGLAB (version 2024 or higher)
 
 ## Test data
 1- Download the test data from [[Here]](https://lstneuro-my.sharepoint.com/:f:/g/personal/ariosky_neuroinformatics-collaboratory_org/IgAW2KHcsUCKT5L1pXGg5tSFAbRyuXSyNBcjEuSt2EUATTw?e=k6sO5x).
@@ -56,6 +56,7 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
  
 
 ## Params configuration
+
 ### General params file
 - app/general_params.json  (for the text data keep the general params configuration )
 - Define the path to EEGLAB
