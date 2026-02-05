@@ -32,7 +32,6 @@ disp('==========================================================================
 addpath(genpath('functions'));
 addpath(genpath('tools'));
 addpath(genpath('external'));
-addpath(genpath('templates'));
 addpath(genpath('data'));
 
 
@@ -175,15 +174,22 @@ for i=1:length(subjects)
       
     for e=1:length(EEGs)
         segmentEEG                          = EEGs(e);
+        cond                                = segmentEEG.condition;
+        seg                                 = segmentEEG.segment;
+        disp(strcat("-->> Processing condition: ", cond, " - segment: ", num2str(seg)));
         seg_path = fullfile(subject_path,'eeg');
         if(~isfolder(seg_path))
             mkdir(seg_path);
         end
-        save(fullfile(seg_path,strcat('EEG_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'-struct','segmentEEG');
+        save(fullfile(seg_path,strcat('EEG_cond-',cond,'_seg-',num2str(seg),'.mat')),'-struct','segmentEEG');
         subject.MEEG                        = segmentEEG;
         data                                = subject.MEEG.data;
         V                                   = modwt(data.', wname, levels);
         V                                   = permute(V,[3 2 1]);
+        clear data;
+        disp('--------------------------------------------------------------------------');
+        disp(strcat("-->> Executing Activation level process (sSSBL++)"));
+        disp('--------------------------------------------------------------------------');
         J                                   = zeros(length(subject.Scortex.Vertices),size(V,2),size(V,3));
         for lev = 1:(levels+1)
             Svv                             = cov(squeeze(V(:,:,lev)).');
@@ -192,29 +198,46 @@ for i=1:length(subjects)
             sensor_level_out.Svv            = Svv;
             sensor_level_out.band.str_band  = band_names{lev};
             subject.sensor_level_out        = sensor_level_out;
-            [subject,properties,outputs]    = activation_level_sssblpp(subject,properties);
+            clear sensor_level_out;
+            [~,properties,outputs]    = activation_level_sssblpp(subject,properties);
+            
             Tjv                             = outputs.T;
             Tjv                             = bst_gain_orient(Tjv', Leadfield.GridOrient, Leadfield.GridAtlas);
             Tjv                             = Tjv';
             J(:,:,lev)                      = Tjv*squeeze(V(:,:,lev));
+            clear Tjv Svv;
             % PlotSourceTopography_safe(Cortex, squeeze(var(J(:,:,lev),0,2)), cmap, strcat(subID,'-','Eyes closed',band_names{lev}));
         end
+        clear V;
 
+        disp('--------------------------------------------------------------------------');
+        disp(strcat("-->> Executing Time Series Analysis process"));
+        disp('--------------------------------------------------------------------------');
+        disp("---->> Preparing J for time analysis")
         J                                   = permute(J,[3 2 1]);
         J                                   = imodwt(J, wname).';
-        segmentEEG.J                        = J;
-        out                                 = TimeSeriesAnalysis(segmentEEG,Fs,Cortex);
+        out                                 = TimeSeriesAnalysis(segmentEEG, J, Fs, Cortex);
+        clear segmentEEG;
+        BandMaps                            = out.BandMaps;
+
+        out_path = fullfile(subject_path,'time');
+        if(~isfolder(out_path))
+            mkdir(out_path);
+        end
+        disp(strcat("------>> Saving Time Series Analysis in: ",'TimeSeriesAnalysis_cond-',cond,'_seg-',num2str(seg),'.mat'));
+        save(fullfile(out_path,strcat('TimeSeriesAnalysis_cond-',cond,'_seg-',num2str(seg),'.mat')),'-struct','out','-v7.3');
+        clear out;
 
         fig_path = fullfile(subject_path,'Figures');
         if(~isfolder(fig_path))
             mkdir(fig_path);
         end
         disp(strcat("---->> Saving figures"));
-        fig_delta                           =  PlotSourceTopography(Cortex, fixmap(out.BandMaps.delta), cmap, strcat(subID,'-',segmentEEG.condition,'-seg-',num2str(segmentEEG.segment),'-Delta band power (0.5–4 Hz)'));
-        saveas(fig_delta,fullfile(fig_path,strcat(subID,'-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'-Delta band power (0.5–4 Hz)','.fig')));
+        fig_delta                           =  PlotSourceTopography(Cortex, fixmap(BandMaps.delta), cmap, strcat(subID,'-',cond,'-seg-',num2str(seg),'-Delta band power (0.5–4 Hz)'));
+        saveas(fig_delta,fullfile(fig_path,strcat(subID,'-',cond,'_seg-',num2str(seg),'-Delta band power (0.5–4 Hz)','.fig')));
         close(fig_delta);
-        fig_alpha                            = PlotSourceTopography(Cortex, fixmap(out.BandMaps.alpha), cmap, strcat(subID,'-',segmentEEG.condition,'-seg-',num2str(segmentEEG.segment),'-Alpha band power (8–14 Hz)'));
-        saveas(fig_alpha,fullfile(fig_path,strcat(subID,'-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'-Alpha band power (8–14 Hz)','.fig')));
+        fig_alpha                            = PlotSourceTopography(Cortex, fixmap(BandMaps.alpha), cmap, strcat(subID,'-',cond,'-seg-',num2str(seg),'-Alpha band power (8–14 Hz)'));
+        saveas(fig_alpha,fullfile(fig_path,strcat(subID,'-',cond,'_seg-',num2str(seg),'-Alpha band power (8–14 Hz)','.fig')));
         close(fig_alpha);
 
 
@@ -227,23 +250,24 @@ for i=1:length(subjects)
         for s=1:length(Scouts)
             scout                           = Scouts(s);
             scoutHigh                       = ScoutsHigh(s);
-            ScoutHighCDataDelta(scoutHigh.Vertices) = median(out.BandMaps.delta(scout.Vertices),1);
-            ScoutHighCDataAlpha(scoutHigh.Vertices) = median(out.BandMaps.alpha(scout.Vertices),1);
-        end
+            ScoutHighCDataDelta(scoutHigh.Vertices) = median(BandMaps.delta(scout.Vertices),1);
+            ScoutHighCDataAlpha(scoutHigh.Vertices) = median(BandMaps.alpha(scout.Vertices),1);
+        end    
+        clear BandMaps;
 
         disp(strcat("---->> Saving figures"));
-        fig_delta = PlotScoutTopography(CortexHigh,ScoutHighCDataDelta,cmap,strcat(subID," - ",segmentEEG.condition,'-seg-',num2str(segmentEEG.segment)," - Delta - Scouts map (0.1–4 Hz)"));
-        saveas(fig_delta,fullfile(fig_path,strcat(subID,'-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'- Delta - Scouts map (0.1–4 Hz)','.fig')));
+        fig_delta = PlotScoutTopography(CortexHigh,ScoutHighCDataDelta,cmap,strcat(subID," - ",cond,'-seg-',num2str(seg)," - Delta - Scouts map (0.1–4 Hz)"));
+        saveas(fig_delta,fullfile(fig_path,strcat(subID,'-',cond,'_seg-',num2str(seg),'- Delta - Scouts map (0.1–4 Hz)','.fig')));
         close(fig_delta);
-        fig_alpha = PlotScoutTopography(CortexHigh,ScoutHighCDataAlpha,cmap,strcat(subID," - ",segmentEEG.condition,'-seg-',num2str(segmentEEG.segment)," - Alpha - Scouts map (8–14 Hz)"));
-        saveas(fig_alpha,fullfile(fig_path,strcat(subID,'-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'- Alpha - Scouts map (8–14 Hz)','.fig')));
+        fig_alpha = PlotScoutTopography(CortexHigh,ScoutHighCDataAlpha,cmap,strcat(subID," - ",cond,'-seg-',num2str(seg)," - Alpha - Scouts map (8–14 Hz)"));
+        saveas(fig_alpha,fullfile(fig_path,strcat(subID,'-',cond,'_seg-',num2str(seg),'- Alpha - Scouts map (8–14 Hz)','.fig')));
         close(fig_alpha);
+        clear ScoutHighCDataDelta ScoutHighCDataAlpha;
 
         %%
         %%  Time series by Scouts (Eyes open)
         %%
-        disp(strcat("---->> Averaging J by Scouts"));
-        J = segmentEEG.J;
+        disp(strcat("---->> Averaging J by Scouts"));        
 
         JScout = zeros(length(Scouts),size(J,2));
         for s=1:length(Scouts)
@@ -253,113 +277,110 @@ for i=1:length(subjects)
         end
 
         disp(strcat("---->> Saving data"));
-        out_path = fullfile(subject_path,'time');
-        if(~isfolder(out_path))
-            mkdir(out_path);
-        end
-        disp(strcat("------>> Saving J in: ",'J_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat'));
-        save(fullfile(out_path,strcat('J_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'J','-v7.3');
-        disp(strcat("------>> Saving Jscouts in: ",'JScout_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat'));
-        save(fullfile(out_path,strcat('JScout_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'JScout','-v7.3');
-        disp(strcat("------>> Saving Time Series Analysis in: ",'TimeSeriesAnalysis_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat'));
-        save(fullfile(out_path,strcat('TimeSeriesAnalysis_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'-struct','out','-v7.3');
+        disp(strcat("------>> Saving J in: ",'J_cond-',cond,'_seg-',num2str(seg),'.mat'));
+        save(fullfile(out_path,strcat('J_cond-',cond,'_seg-',num2str(seg),'.mat')),'J','-v7.3');
+        disp(strcat("------>> Saving Jscouts in: ",'JScout_cond-',cond,'_seg-',num2str(seg),'.mat'));
+        save(fullfile(out_path,strcat('JScout_cond-',cond,'_seg-',num2str(seg),'.mat')),'JScout','-v7.3');
+        clear J JScout;
 
         disp('--------------------------------------------------------------------------');
         disp('--------------------------------------------------------------------------');
     end
 
+    clear subject;
+
 end
-cmap = load("tools/mycolormap_brain_basic_conn.mat");
-nV = size(Cortex.Vertices,1);
-fixmap = @(v) reshape(v(1:min(numel(v),nV)), [], 1);
-
-%%
-%%  EO average (Delta & Alpha)
-%%
-BandMapsDelta = [BandMaps.delta];
-BandMapsDelta = median(BandMapsDelta,2);
-BandMapsAlpha = [BandMaps.alpha];
-BandMapsAlpha = median(BandMapsAlpha,2);
-fig_delta_ave = PlotSourceTopography_safe(Cortex, fixmap(BandMapsDelta), cmap, strcat('Eyes closed','-Delta band average power (0.1–4 Hz)'));
-saveas(fig_delta_ave,fullfile(output_path,strcat('Eyes closed','-Delta band average power (0.1–4 Hz)','.fig')));
-close(fig_delta_ave);
-fig_alpha_ave = PlotSourceTopography_safe(Cortex, fixmap(BandMapsAlpha), cmap, strcat('Eyes closed','-Alpha band average power (8–14 Hz)'));
-saveas(fig_alpha_ave,fullfile(output_path,strcat('Eyes closed','-Alpha band average power (8–14 Hz)','.fig')));
-close(fig_alpha_ave);
-
-% EO Scouts
-ScoutHighCDataDelta = zeros(length(CortexHigh.Vertices),1);
-ScoutHighCDataAlpha = zeros(length(CortexHigh.Vertices),1);
-for s=1:length(Scouts)
-    scout = Scouts(s);
-    scoutHigh = ScoutsHigh(s);
-    ScoutHighCDataDelta(scoutHigh.Vertices) = median(BandMapsDelta(scout.Vertices),1);
-    ScoutHighCDataAlpha(scoutHigh.Vertices) = median(BandMapsAlpha(scout.Vertices),1);
-end
-nV = size(CortexHigh.Vertices,1);
-fixmap = @(v) reshape(v(1:min(numel(v),nV)), [], 1);
-fig_scout_delta_ave = PlotScoutTopography(CortexHigh,ScoutHighCDataDelta,cmap,strcat(subID," - ",'Eyes closed',"- Average - Delta - Scouts map (0.1–4 Hz)"));
-saveas(fig_scout_delta_ave,fullfile(output_path,strcat('Eyes closed','-Average-Delta-Scouts map (0.1–4 Hz)','.fig')));
-close(fig_scout_delta_ave);
-fig_scout_alpha_ave = PlotScoutTopography(CortexHigh,ScoutHighCDataAlpha,cmap,strcat(subID," - ",'Eyes closed',"- Average - Alpha - Scouts map (8–14 Hz)"));
-saveas(fig_scout_alpha_ave,fullfile(output_path,strcat('Eyes closed','-Average-Alpha-Scouts map (8–14 Hz)','.fig')));
-close(fig_scout_alpha_ave);
-
-
-% Pxx_ave = median(Pxx,3);
-% bands = struct('delta',[0.1 4],'theta',[4 7], ...
-%     'alpha',[8 14],'alpha10',[9.5 10.5],'beta',[14 30],'gammaL',[30 50]);
-%
-% bandNames = fieldnames(bands);
-% BandMaps = struct();
-% for i=1:numel(bandNames)
-%     rngHz = bands.(bandNames{i});
-%     BandMaps.(bandNames{i}) = bandpower_map(Pxx_ave, out.f, rngHz);  % [S x 1]
-% end
-% PlotSourceTopography_safe(Cortex, fixmap(BandMaps.delta), cmap, strcat(subID,'-','Eyes closed','-Delta band power (0.1–4 Hz)'));
-% PlotSourceTopography_safe(Cortex, fixmap(BandMaps.alpha), cmap, strcat(subID,'-','Eyes closed','-Alpha band power (8–14 Hz)'));
-%
-% Pxx_ave = median(Pxx,3);
-% for i=1:numel(bandNames)
-%     rngHz = bands.(bandNames{i});
-%     BandMaps.(bandNames{i}) = bandpower_map(Pxx_ave, out.f, rngHz);  % [S x 1]
-% end
 % cmap = load("tools/mycolormap_brain_basic_conn.mat");
 % nV = size(Cortex.Vertices,1);
 % fixmap = @(v) reshape(v(1:min(numel(v),nV)), [], 1);
-% PlotSourceTopography_safe(Cortex, fixmap(BandMaps.delta), cmap, strcat(EEG_ec.SubID,'-',EEG_ec.Condition,'-Delta band power (0.1–4 Hz)'));
-% PlotSourceTopography_safe(Cortex, fixmap(BandMaps.alpha), cmap, strcat(EEG_ec.SubID,'-',EEG_ec.Condition,'-Alpha band power (8–14 Hz)'));
-%
-%
-%
-
-%%
-%%  Saving the Time Series
-%%
-J_Ave = median(TemiSeriesTensor,3);
-J_Scout_Ave = median(Scout_tensor,3);
-EEG_Ave.J = J_Ave;
-EEG_Ave.JScout = J_Scout_Ave;
-EEG_Ave.SubID = 'Ave';
-EEG_Ave.Condition = 'Eyes open';
-% TimeSeriesAnalysis(EEG_Ave,Fs,Cortex);
-
-J_Ave_ec = median(tensor,3);
-J_Scout_Ave_ec = median(scout_tensor,3);
-EEG_Ave.J = J_Ave_ec;
-EEG_Ave.JScout = J_Scout_Ave_ec;
-EEG_Ave.SubID = 'Ave';
-EEG_Ave.Condition = 'Eyes closed';
-% TimeSeriesAnalysis(EEG_Ave,Fs,Cortex);
-
-disp(strcat("---->> Saving data"));
-save(fullfile(output_path,'Time_Ave.mat'),'J_Ave');
-save(fullfile(output_path,'Time_Ave_Scouts.mat'),'J_Scout_Ave');
-save(fullfile(output_path,'TimeSeries.mat'),'TemiSeriesTensor');
-
-save(fullfile(output_path,'Time_Ave.mat'),'J_Ave_ec');
-save(fullfile(output_path,'Time_Ave_Scouts.mat'),'J_Scout_Ave_ec');
-save(fullfile(output_path,'TimeSeries_ec.mat'),'tensor');
+% 
+% %%
+% %%  EO average (Delta & Alpha)
+% %%
+% BandMapsDelta = [BandMaps.delta];
+% BandMapsDelta = median(BandMapsDelta,2);
+% BandMapsAlpha = [BandMaps.alpha];
+% BandMapsAlpha = median(BandMapsAlpha,2);
+% fig_delta_ave = PlotSourceTopography_safe(Cortex, fixmap(BandMapsDelta), cmap, strcat('Eyes closed','-Delta band average power (0.1–4 Hz)'));
+% saveas(fig_delta_ave,fullfile(output_path,strcat('Eyes closed','-Delta band average power (0.1–4 Hz)','.fig')));
+% close(fig_delta_ave);
+% fig_alpha_ave = PlotSourceTopography_safe(Cortex, fixmap(BandMapsAlpha), cmap, strcat('Eyes closed','-Alpha band average power (8–14 Hz)'));
+% saveas(fig_alpha_ave,fullfile(output_path,strcat('Eyes closed','-Alpha band average power (8–14 Hz)','.fig')));
+% close(fig_alpha_ave);
+% 
+% % EO Scouts
+% ScoutHighCDataDelta = zeros(length(CortexHigh.Vertices),1);
+% ScoutHighCDataAlpha = zeros(length(CortexHigh.Vertices),1);
+% for s=1:length(Scouts)
+%     scout = Scouts(s);
+%     scoutHigh = ScoutsHigh(s);
+%     ScoutHighCDataDelta(scoutHigh.Vertices) = median(BandMapsDelta(scout.Vertices),1);
+%     ScoutHighCDataAlpha(scoutHigh.Vertices) = median(BandMapsAlpha(scout.Vertices),1);
+% end
+% nV = size(CortexHigh.Vertices,1);
+% fixmap = @(v) reshape(v(1:min(numel(v),nV)), [], 1);
+% fig_scout_delta_ave = PlotScoutTopography(CortexHigh,ScoutHighCDataDelta,cmap,strcat(subID," - ",'Eyes closed',"- Average - Delta - Scouts map (0.1–4 Hz)"));
+% saveas(fig_scout_delta_ave,fullfile(output_path,strcat('Eyes closed','-Average-Delta-Scouts map (0.1–4 Hz)','.fig')));
+% close(fig_scout_delta_ave);
+% fig_scout_alpha_ave = PlotScoutTopography(CortexHigh,ScoutHighCDataAlpha,cmap,strcat(subID," - ",'Eyes closed',"- Average - Alpha - Scouts map (8–14 Hz)"));
+% saveas(fig_scout_alpha_ave,fullfile(output_path,strcat('Eyes closed','-Average-Alpha-Scouts map (8–14 Hz)','.fig')));
+% close(fig_scout_alpha_ave);
+% 
+% 
+% % Pxx_ave = median(Pxx,3);
+% % bands = struct('delta',[0.1 4],'theta',[4 7], ...
+% %     'alpha',[8 14],'alpha10',[9.5 10.5],'beta',[14 30],'gammaL',[30 50]);
+% %
+% % bandNames = fieldnames(bands);
+% % BandMaps = struct();
+% % for i=1:numel(bandNames)
+% %     rngHz = bands.(bandNames{i});
+% %     BandMaps.(bandNames{i}) = bandpower_map(Pxx_ave, out.f, rngHz);  % [S x 1]
+% % end
+% % PlotSourceTopography_safe(Cortex, fixmap(BandMaps.delta), cmap, strcat(subID,'-','Eyes closed','-Delta band power (0.1–4 Hz)'));
+% % PlotSourceTopography_safe(Cortex, fixmap(BandMaps.alpha), cmap, strcat(subID,'-','Eyes closed','-Alpha band power (8–14 Hz)'));
+% %
+% % Pxx_ave = median(Pxx,3);
+% % for i=1:numel(bandNames)
+% %     rngHz = bands.(bandNames{i});
+% %     BandMaps.(bandNames{i}) = bandpower_map(Pxx_ave, out.f, rngHz);  % [S x 1]
+% % end
+% % cmap = load("tools/mycolormap_brain_basic_conn.mat");
+% % nV = size(Cortex.Vertices,1);
+% % fixmap = @(v) reshape(v(1:min(numel(v),nV)), [], 1);
+% % PlotSourceTopography_safe(Cortex, fixmap(BandMaps.delta), cmap, strcat(EEG_ec.SubID,'-',EEG_ec.Condition,'-Delta band power (0.1–4 Hz)'));
+% % PlotSourceTopography_safe(Cortex, fixmap(BandMaps.alpha), cmap, strcat(EEG_ec.SubID,'-',EEG_ec.Condition,'-Alpha band power (8–14 Hz)'));
+% %
+% %
+% %
+% 
+% %%
+% %%  Saving the Time Series
+% %%
+% J_Ave = median(TemiSeriesTensor,3);
+% J_Scout_Ave = median(Scout_tensor,3);
+% EEG_Ave.J = J_Ave;
+% EEG_Ave.JScout = J_Scout_Ave;
+% EEG_Ave.SubID = 'Ave';
+% EEG_Ave.Condition = 'Eyes open';
+% % TimeSeriesAnalysis(EEG_Ave,Fs,Cortex);
+% 
+% J_Ave_ec = median(tensor,3);
+% J_Scout_Ave_ec = median(scout_tensor,3);
+% EEG_Ave.J = J_Ave_ec;
+% EEG_Ave.JScout = J_Scout_Ave_ec;
+% EEG_Ave.SubID = 'Ave';
+% EEG_Ave.Condition = 'Eyes closed';
+% % TimeSeriesAnalysis(EEG_Ave,Fs,Cortex);
+% 
+% disp(strcat("---->> Saving data"));
+% save(fullfile(output_path,'Time_Ave.mat'),'J_Ave');
+% save(fullfile(output_path,'Time_Ave_Scouts.mat'),'J_Scout_Ave');
+% save(fullfile(output_path,'TimeSeries.mat'),'TemiSeriesTensor');
+% 
+% save(fullfile(output_path,'Time_Ave.mat'),'J_Ave_ec');
+% save(fullfile(output_path,'Time_Ave_Scouts.mat'),'J_Scout_Ave_ec');
+% save(fullfile(output_path,'TimeSeries_ec.mat'),'tensor');
 
 
 %%

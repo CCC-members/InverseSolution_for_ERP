@@ -1,5 +1,10 @@
 # InverseSolution_for_ERP
 
+## Authors
+1. Ariosky Areces Gonzalez
+2. Deirel Paz Linares
+
+
 ## Inverse solution 
 Structural processing and source time series are computed using CiftiStorm pipeline (Areces-Gonzalez et al., 2024), a MATLAB toolbox for spectral analysis and inverse solution of EEG/MEG data. 
 Spectral analysis is via K-order orthogonal wavelet decomposition of the data (Eq.1) employing maximal overlap discrete wavelet transform method (MODWT) (Percival et al. 1997).
