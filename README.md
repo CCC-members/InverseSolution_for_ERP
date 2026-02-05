@@ -42,17 +42,17 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 
 ## References 
 
-1- Areces-Gonzalez, A., Paz-Linares, D., Riaz, U., Wang, Y., Li, M., Razzaq, F.A., Bosch-Bayard, J.F., Gonzalez-Moreira, E., Lifespan Brain Chart Consortium (LBCC), Global Brain Consortium (GBC) and Cuban Human Brain Mapping Project (CHBMP), 2024. Ciftistorm pipeline: facilitating reproducible eeg/meg source connectomics. Frontiers in Neuroscience, 18, p.1237245.
-2- Percival, D.B. and Walden, A.T., 2000. Wavelet methods for time series analysis (Vol. 4). Cambridge university press.(Percival et al. 1997)
-3- Paz-Linares, D., Gonzalez-Moreira, E., Areces-Gonzalez, A., Wang, Y., Li, M., Vega-Hernandez, M., Wang, Q., Bosch-Bayard, J., Bringas-Vega, M.L., Martinez-Montes, E. and Valdes-Sosa, M.J., 2023. Minimizing the distortions in electrophysiological source imaging of cortical oscillatory activity via Spectral Structured Sparse Bayesian Learning. Frontiers in Neuroscience, 17, p.978527.
-4- Gonzalez-Moreira, E., Paz-Linares, D., Areces-Gonzalez, A., Wang, R., Bosch-Bayard, J., Bringas-Vega, M.L. and Valdes-Sosa, P.A., 2018. Caulking the leakage effect in MEEG source connectivity analysis. arXiv preprint arXiv:1810.00786.
+    1- Areces-Gonzalez, A., Paz-Linares, D., Riaz, U., Wang, Y., Li, M., Razzaq, F.A., Bosch-Bayard, J.F., Gonzalez-Moreira, E., Lifespan Brain Chart Consortium (LBCC), Global Brain Consortium (GBC) and Cuban Human Brain Mapping Project (CHBMP), 2024. Ciftistorm pipeline: facilitating reproducible eeg/meg source connectomics. Frontiers in Neuroscience, 18, p.1237245.
+    2- Percival, D.B. and Walden, A.T., 2000. Wavelet methods for time series analysis (Vol. 4). Cambridge university press.(Percival et al. 1997)
+    3- Paz-Linares, D., Gonzalez-Moreira, E., Areces-Gonzalez, A., Wang, Y., Li, M., Vega-Hernandez, M., Wang, Q., Bosch-Bayard, J., Bringas-Vega, M.L., Martinez-Montes, E. and Valdes-Sosa, M.J., 2023. Minimizing the distortions in electrophysiological source imaging of cortical oscillatory activity via Spectral Structured Sparse Bayesian Learning. Frontiers in Neuroscience, 17, p.978527.
+    4- Gonzalez-Moreira, E., Paz-Linares, D., Areces-Gonzalez, A., Wang, R., Bosch-Bayard, J., Bringas-Vega, M.L. and Valdes-Sosa, P.A., 2018. Caulking the leakage effect in MEEG source connectivity analysis. arXiv preprint arXiv:1810.00786.
 
 ## Dependencies
-1- EEGLAB (version 2024 or higher)
+    1- EEGLAB (version 2024 or higher)
 
 ## Test data
-1- Download the test data from [[Here]](https://lstneuro-my.sharepoint.com/:f:/g/personal/ariosky_neuroinformatics-collaboratory_org/IgAW2KHcsUCKT5L1pXGg5tSFAbRyuXSyNBcjEuSt2EUATTw?e=k6sO5x).
-2- Unzip the file in the project directory
+    1- Download the test data from [[Here]](https://lstneuro-my.sharepoint.com/:f:/g/personal/ariosky_neuroinformatics-collaboratory_org/IgAW2KHcsUCKT5L1pXGg5tSFAbRyuXSyNBcjEuSt2EUATTw?e=k6sO5x).
+    2- Unzip the file into the project directory
  
 
 ## Params configuration
