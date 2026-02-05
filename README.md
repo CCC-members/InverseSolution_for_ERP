@@ -59,12 +59,58 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 
 ### General params file
 - app/general_params.json  (for the text data keep the general params configuration )
+- Define the work space configuration (Test data)
+```
+"workspace":{
+        "description":"Put description here",
+        "input_path":"data/template",
+        "ref_file":"eeg/SubID_task-protmap_eeg.edf",
+        "output_path":"outputs/template",
+        "part_file":"participants.tsv"
+    },
+```
+
 - Define the path to EEGLAB
+```
 "dependencies":{
         "eeglab":{
             "base_path":"/root/path/to/EEGLAB"
         }
     }
+```
+
+### Anatomy params file
+- app/anat_params.json (for template and individual anatomy in Brainstorm format)
+- Select the anatomy type based in the type_list tag. "type":"template" (for template anatomy) or "type":"individual" (for individual anatomy)
+- Define the anatomy parametes in the corresponding type (the folowing configuration is for the test data)
+
+```
+    "type":"template",
+    "type_list":[
+        {
+            "id":"template",
+            "name":"template_anatomy",
+            "description":"Template anatomy in Brainstorm format",
+            "base_path":"data/template",
+            "channels":"structural/channel_ASA_10-05_343.mat",
+            "leadfield":"structural/headmodel_surf_openmeeg.mat",
+            "cortex_low":"structural/tess_cortex_mid_high_8000V.mat",
+            "cortex_high":"structural/tess_cortex_mid_high.mat",
+            "labels":"labels/labels_chbmp_19.json"
+        },
+        {
+            "id":"individual",
+            "name":"individual_anatomy",
+            "description":"Individual anatomy in Brainstorm format",
+            "base_path":"data/individual",
+            "channels":"structural/channel_ASA_10-05_343.mat",
+            "leadfield":"structural/headmodel_surf_openmeeg.mat",
+            "cortex_low":"structural/tess_cortex_concat_8000V_fix.mat",
+            "cortex_high":"structural/tess_cortex_concat.mat",
+            "labels":"labels/labels_chbmp_19.json"
+        }
+    ]
+```
 
 ### Event params file
 app/event_params.json
