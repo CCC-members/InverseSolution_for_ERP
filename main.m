@@ -204,13 +204,12 @@ for i=1:length(subjects)
         J                                   = imodwt(J, wname).';
         segmentEEG.J                        = J;
         out                                 = TimeSeriesAnalysis(segmentEEG,Fs,Cortex);
-        out.J                               = J;
 
         fig_path = fullfile(subject_path,'Figures');
         if(~isfolder(fig_path))
             mkdir(fig_path);
         end
-        disp(strcat("---->> Saving data"));
+        disp(strcat("---->> Saving figures"));
         fig_delta                           =  PlotSourceTopography(Cortex, fixmap(out.BandMaps.delta), cmap, strcat(subID,'-',segmentEEG.condition,'-seg-',num2str(segmentEEG.segment),'-Delta band power (0.5–4 Hz)'));
         saveas(fig_delta,fullfile(fig_path,strcat(subID,'-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'-Delta band power (0.5–4 Hz)','.fig')));
         close(fig_delta);
@@ -222,6 +221,7 @@ for i=1:length(subjects)
         %%
         %% Scout map by subject
         %%
+        disp(strcat("---->> getting Time series by Scouts"));
         ScoutHighCDataDelta              = zeros(length(CortexHigh.Vertices),1);
         ScoutHighCDataAlpha              = zeros(length(CortexHigh.Vertices),1);
         for s=1:length(Scouts)
@@ -230,6 +230,8 @@ for i=1:length(subjects)
             ScoutHighCDataDelta(scoutHigh.Vertices) = median(out.BandMaps.delta(scout.Vertices),1);
             ScoutHighCDataAlpha(scoutHigh.Vertices) = median(out.BandMaps.alpha(scout.Vertices),1);
         end
+
+        disp(strcat("---->> Saving figures"));
         fig_delta = PlotScoutTopography(CortexHigh,ScoutHighCDataDelta,cmap,strcat(subID," - ",segmentEEG.condition,'-seg-',num2str(segmentEEG.segment)," - Delta - Scouts map (0.1–4 Hz)"));
         saveas(fig_delta,fullfile(fig_path,strcat(subID,'-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'- Delta - Scouts map (0.1–4 Hz)','.fig')));
         close(fig_delta);
@@ -240,20 +242,27 @@ for i=1:length(subjects)
         %%
         %%  Time series by Scouts (Eyes open)
         %%
+        disp(strcat("---->> Averaging J by Scouts"));
         J = segmentEEG.J;
+
         JScout = zeros(length(Scouts),size(J,2));
         for s=1:length(Scouts)
             scout = Scouts(s);
             sVertices = scout.Vertices;
             JScout(s,:) = median(J(scout.Vertices,:),1);
         end
-        out.JScouts = JScout;
 
+        disp(strcat("---->> Saving data"));
         out_path = fullfile(subject_path,'time');
         if(~isfolder(out_path))
             mkdir(out_path);
         end
-        save(fullfile(out_path,strcat('Times_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'-struct','out','-v7.3');
+        disp(strcat("------>> Saving J in: ",'J_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat'));
+        save(fullfile(out_path,strcat('J_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'J','-v7.3');
+        disp(strcat("------>> Saving Jscouts in: ",'JScout_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat'));
+        save(fullfile(out_path,strcat('JScout_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'JScout','-v7.3');
+        disp(strcat("------>> Saving Time Series Analysis in: ",'TimeSeriesAnalysis_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat'));
+        save(fullfile(out_path,strcat('TimeSeriesAnalysis_cond-',segmentEEG.condition,'_seg-',num2str(segmentEEG.segment),'.mat')),'-struct','out','-v7.3');
 
         disp('--------------------------------------------------------------------------');
         disp('--------------------------------------------------------------------------');
