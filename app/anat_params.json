@@ -1,0 +1,28 @@
+{
+    "description":"Anatomy params specifications",
+    "type":"template",
+    "type_list":[
+        {
+            "id":"template",
+            "name":"template_anatomy",
+            "description":"Template anatomy in Brainstorm format",
+            "base_path":"data/template",
+            "channels":"structural/channel_ASA_10-05_343.mat",
+            "leadfield":"structural/headmodel_surf_openmeeg.mat",
+            "cortex_low":"structural/tess_cortex_mid_high_8000V.mat",
+            "cortex_high":"structural/tess_cortex_mid_high.mat",
+            "labels":"labels/labels_chbmp_19.json"
+        },
+        {
+            "id":"individual",
+            "name":"individual_anatomy",
+            "description":"Individual anatomy in Brainstorm format",
+            "base_path":"data/individual",
+            "channels":"structural/channel_ASA_10-05_343.mat",
+            "leadfield":"structural/headmodel_surf_openmeeg.mat",
+            "cortex_low":"structural/tess_cortex_concat_8000V_fix.mat",
+            "cortex_high":"structural/tess_cortex_concat.mat",
+            "labels":"labels/labels_chbmp_19.json"
+        }
+    ]
+}

@@ -26,15 +26,8 @@ disp('-->> Starting process');
 disp('==========================================================================');
 disp('==========================================================================');
 
-properties.activation_params = jsondecode(fileread("app/activation_params.json"));
-properties.sensor_params = jsondecode(fileread("app/sensor_params.json"));
-properties.general_params = jsondecode(fileread("app/general_params.json"));
-properties.event_params = jsondecode(fileread("app/event_params.json"));
-
-
-
 %%
-%% Preparing properties
+%% Preparing dependencies
 %%
 addpath(genpath('functions'));
 addpath(genpath('tools'));
@@ -43,21 +36,43 @@ addpath(genpath('templates'));
 addpath(genpath('data'));
 
 
-base_path               = properties.general_params.workspace.input_path;
-output_path             = properties.general_params.workspace.output_path;
-ref_labels              = jsondecode(fileread("templates/channels/labels_chbmp_19.json"));
+%%
+%%  Defining properties
+%%
+properties.activation_params = jsondecode(fileread("app/activation_params.json"));
+properties.sensor_params = jsondecode(fileread("app/sensor_params.json"));
+properties.general_params = jsondecode(fileread("app/general_params.json"));
+properties.anat_params = jsondecode(fileread("app/anat_params.json"));
+properties.event_params = jsondecode(fileread("app/event_params.json"));
 
 
+%%
+%%  Statics parameters
+%%
 cmap                    = load("tools/mycolormap_brain_basic_conn.mat");
 Fs                      = properties.sensor_params.samp_freq.value;
 wname                   = 'db4';
 levels                  = 7;
 band_names              = {'32-64Hz', '16-32Hz', '8-16Hz', '4-8Hz', '2-4Hz', '1-2Hz', '0.5-1Hz','<0.5Hz'};
+base_path               = properties.general_params.workspace.input_path;
+output_path             = properties.general_params.workspace.output_path;
 
 
+
+if(isequal(properties.anat_params.type,"template"))
+    anat_params = properties.anat_params.type_list(1);
+    disp('-->> Loading structural data for template anatomy');
+    Channels                    = load(fullfile(anat_params.base_path,anat_params.channels));
+    Leadfield                   = load(fullfile(anat_params.base_path,anat_params.leadfield));
+    Cortex                      = load(fullfile(anat_params.base_path,anat_params.cortex_low));
+    CortexHigh                  = load(fullfile(anat_params.base_path,anat_params.cortex_high));    
+    Scouts                      = Cortex.Atlas(Cortex.iAtlas).Scouts;
+    ScoutsHigh                  = CortexHigh.Atlas(CortexHigh.iAtlas).Scouts;
+    ref_labels                  = jsondecode(fileread(fullfile(anat_params.base_path,anat_params.labels)));
+end
 
 subjects = dir(fullfile(base_path));
-subjects(ismember({subjects.name},{'.','..','derivatives','.datalad'})) = [];
+subjects(ismember({subjects.name},{'.','..','derivatives','.datalad','labels','structural'})) = [];
 subjects = subjects([subjects.isdir]);
 %%
 %%  Propcessing EEG Data
@@ -93,8 +108,24 @@ for i=1:length(subjects)
     if(~isfolder(subject_path))
         mkdir(subject_path);
     end
+
     %%
-    %% Loadding Functional data
+    %% Loading Structural data
+    %%
+    if(isequal(properties.anat_params.type,'individual'))
+        anat_params = properties.anat_params.type_list(2);
+        disp('-->> Loading structural data for individual anatomy');
+        Channels                    = load(fullfile(anat_params.base_path,subID,anat_params.channels));
+        Leadfield                   = load(fullfile(anat_params.base_path,subID,anat_params.leadfield));
+        Cortex                      = load(fullfile(anat_params.base_path,subID,anat_params.cortex_low));
+        CortexHigh                  = load(fullfile(anat_params.base_path,subID,anat_params.cortex_high));
+        Scouts                      = Cortex.Atlas(Cortex.iAtlas).Scouts;
+        ScoutsHigh                  = CortexHigh.Atlas(CortexHigh.iAtlas).Scouts;
+        ref_labels                  = jsondecode(fileread(fullfile(anat_params.base_path,anat_params.labels)));
+    end
+
+    %%
+    %% Loading Functional data
     %%
     EEG                     = ImportEEG(properties, subID);    
     EEG                     = remove_eeg_channels_by_labels(ref_labels, EEG);
@@ -121,13 +152,8 @@ for i=1:length(subjects)
     %%
     %% Loadding Structural data
     %%
-    disp('-->> Loading structural data');
-    Channels                    = load(fullfile("data",subID,"structural","channel_ASA_10-05_343.mat"));
-    Leadfield                   = load(fullfile("data",subID,"structural","headmodel_surf_openmeeg.mat"));
-    Cortex                      = load(fullfile("data",subID,"structural","tess_cortex_concat_8000V_fix.mat"));
-    CortexHigh                  = load(fullfile("data",subID,"structural","tess_cortex_concat.mat"));    
-    Scouts                      = Cortex.Atlas(Cortex.iAtlas).Scouts;
-    ScoutsHigh                  = CortexHigh.Atlas(CortexHigh.iAtlas).Scouts;
+    
+
     nV                          = size(Cortex.Vertices,1);
     fixmap                      = @(v) reshape(v(1:min(numel(v),nV)), [], 1);
 
