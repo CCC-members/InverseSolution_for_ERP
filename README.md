@@ -169,7 +169,7 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 
 ```json
 "selection":{
-        "type":"continue",
+        "type":"trials",
         "nTrial":30,
         "time":"2.56s"
     }
