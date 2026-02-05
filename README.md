@@ -115,7 +115,71 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 ### Event params file
 app/event_params.json
 - select tag (make true the events or conditions you wantto analize ex ("get":true))
+```
+"select":[
+        {
+            "id":"eyes_open",
+            "get":true,
+            "name":["eyes_open","OJOS ABIERTOS","OJOS_ABIERTOS","VIGILIA_OJOS_ABIERTOS","vigilia_ojos_abiertos","eyes_opened"]
+        },
+        {
+            "id":"eyes_closed",
+            "get":true,
+            "name":["eyes_closed","OJOS CERRADOS","OJOS_CERRADOS","VIGILIA_OJOS_CERRADOS","sue","sue o_espontaneo"]
+        },
+        {
+            "id":"photic_stimulation",
+            "get":false,
+            "name":["photic_stimulation","FOTO ESTIMULACION"]
+        },
+        {
+            "id":"hyperventilation",
+            "get":false,
+            "name":["hyperventilation","HIPERVENTILACION","hyperventilation_1","hyperventilation_2","hyperventilation_3"]
+        },
+        {
+            "id":"recovery",
+            "get":false,
+            "name":["recuperation","RECUPERACION","recovery", "RECOVERY"]
+        },
+        {
+            "id":"sleep",
+            "get":false,
+            "name":["sue","sleep"]
+        }
+
+```
+
 - slection tag (select an option)
     - "type": "segments" ( it will divide the data in segment of the same condition)
-    - "type": "trials" (it  will select the trials based on nTrials and time 
+
+```
+"selection":{
+        "type":"segments",
+        "nTrial":1,
+        "time":""
+    }
+
+```
+
+    - "type": "trials" (it will select the trials based on nTrials and time 
+
+```
+"selection":{
+        "type":"continue",
+        "nTrial":30,
+        "time":"2.56s"
+    }
+
+```
+
     - "type": "continue" ( it will select the segments of the same condition and join them as continues data)
+
+```
+"selection":{
+        "type":"continue",
+        "nTrial":1,
+        "time":""
+    }
+
+```
