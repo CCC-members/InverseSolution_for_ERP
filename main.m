@@ -176,6 +176,8 @@ for i=1:length(subjects)
         segmentEEG                          = EEGs(e);
         cond                                = segmentEEG.condition;
         seg                                 = segmentEEG.segment;
+        disp('--------------------------------------------------------------------------');
+        disp('--------------------------------------------------------------------------');
         disp(strcat("-->> Processing condition: ", cond, " - segment: ", num2str(seg)));
         seg_path = fullfile(subject_path,'eeg');
         if(~isfolder(seg_path))
