@@ -58,9 +58,10 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 ## Params configuration
 
 ### General params file
-- app/general_params.json  (for the text data keep the general params configuration )
+- `app/general_params.json`  (for the text data keep the general params configuration )
 - Define the work space configuration (Test data)
-```
+
+```json
 "workspace":{
         "description":"Put description here",
         "input_path":"data/template",
@@ -71,7 +72,8 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 ```
 
 - Define the path to EEGLAB
-```
+
+```json
 "dependencies":{
         "eeglab":{
             "base_path":"/root/path/to/EEGLAB"
@@ -80,11 +82,11 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 ```
 
 ### Anatomy params file
-- app/anat_params.json (for template and individual anatomy in Brainstorm format)
+- `app/anat_params.json` (for template and individual anatomy in Brainstorm format)
 - Select the anatomy type based in the type_list tag. "type":"template" (for template anatomy) or "type":"individual" (for individual anatomy)
 - Define the anatomy parametes in the corresponding type (the folowing configuration is for the test data)
 
-```
+```json
     "type":"template",
     "type_list":[
         {
@@ -113,9 +115,10 @@ where S_ιι (k)=(∑_t▒〖ι^† (t,k)ι(t,k) 〗)⁄T=H_ιv S_vv (k) H_ιv^�
 ```
 
 ### Event params file
-app/event_params.json
+`app/event_params.json`
 - select tag (make true the events or conditions you wantto analize ex ("get":true))
-```
+
+```json
 "select":[
         {
             "id":"eyes_open",
@@ -152,7 +155,8 @@ app/event_params.json
 
 - slection tag (select an option)
     - "type": "segments" ( it will divide the data in segment of the same condition)
-```
+
+```json
 "selection":{
         "type":"segments",
         "nTrial":1,
@@ -162,7 +166,8 @@ app/event_params.json
 ```
 
 - "type": "trials" (it will select the trials based on nTrials and time 
-```
+
+```json
 "selection":{
         "type":"continue",
         "nTrial":30,
@@ -172,7 +177,8 @@ app/event_params.json
 ```
 
 - "type": "continue" ( it will select the segments of the same condition and join them as continues data)
-```
+
+```json
 "selection":{
         "type":"continue",
         "nTrial":1,
