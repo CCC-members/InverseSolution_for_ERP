@@ -161,7 +161,7 @@ app/event_params.json
 
 ```
 
-    - "type": "trials" (it will select the trials based on nTrials and time 
+- "type": "trials" (it will select the trials based on nTrials and time 
 ```
 "selection":{
         "type":"continue",
@@ -171,7 +171,7 @@ app/event_params.json
 
 ```
 
-    - "type": "continue" ( it will select the segments of the same condition and join them as continues data)
+- "type": "continue" ( it will select the segments of the same condition and join them as continues data)
 ```
 "selection":{
         "type":"continue",
