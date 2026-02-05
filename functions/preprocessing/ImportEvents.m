@@ -28,6 +28,7 @@ if(isfile(events_file))
             EEG.event(i).sample   = str2double(events(i).sample);
         end
     end
+    EEG.annotated = false;
 end
 OutEEG = EEG;
 
