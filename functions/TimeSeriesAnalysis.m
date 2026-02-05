@@ -1,13 +1,15 @@
-function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
+function out = TimeSeriesAnalysis(EEG, J, fs, Cortex, opts)
 % TIME_SERIES_ANALYSIS
 % PSD (0.1–50 Hz), ICA, MSSA, DMD on inverse solution.
 % X: [T x S] or [T x S x K]  (single-trial -> K==1)
 % fs: Hz, Cortex: Brainstorm tess struct
 % opts: nICA, ssa_L, ssa_r, dmd_r, r_pod, show_plots, bands, pod_energy, ridge, rcond
 %       spectra_fmax, spectra_overlayN
-    X = EEG.J';
+    
+    X = J';
+    clear J;
 
-    if nargin < 4, opts = struct; end
+    if nargin < 5, opts = struct; end
     if ndims(X) == 2, X = reshape(X, size(X,1), size(X,2), 1); end
     [T,S,K] = size(X);
 
@@ -38,6 +40,7 @@ function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
     X = bsxfun(@minus, X, mean(X,1));
 
     % ---------- 1) PSD via Welch ----------
+    disp(strcat("---->> PSD via Welch"));
     nfft = max(2^nextpow2(round(2*fs)), 512);
     wlen = round(2*fs);                         % 2-s Hamming
     nover = round(0.5*wlen);
@@ -52,6 +55,7 @@ function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
     % =================== FAST PATH FOR ONE TRIAL ===================
     if K == 1
         % ---- Temporal POD (economy SVD) with adaptive rank ----
+        disp(strcat("---->> Temporal POD (economy SVD) with adaptive rank"));
         [U_t, Sigma, V_s] = svd(X(:,:,1), 'econ');  % X ≈ U_t * Sigma * V_s'
         sing = diag(Sigma);
 
@@ -70,15 +74,18 @@ function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
         S_loads  = V_s;             % [S x r]
 
         % ---- ICA on temporal PCs, map back to space ----
+        disp(strcat("---->> ICA on temporal PCs, map back to space"));
         [IC_time, IC_space] = ica_on_temporal_scores(T_scores, S_loads, opts.nICA, opts);
 
         % ---- MSSA on temporal PCs, map back to space ----
+        disp(strcat("---->> MSSA on temporal PCs, map back to space"));
         L = min(opts.ssa_L, T-1);
         [SSA_time, SSA_sing] = ssa_multichannel(T_scores, L, min(opts.ssa_r, r), opts);
         W_ssa     = safe_regress(T_scores, SSA_time, opts.ridge, opts.rcond); % [r x rssa]
         SSA_space = S_loads * W_ssa;
 
         % ---- Projected DMD (on temporal PCs), map back ----
+        disp(strcat("---->> Projected DMD (on temporal PCs), map back"));
         DMD = dmd_projected(T_scores, fs, min(opts.dmd_r, r), opts);
         keep = DMD.freq_hz >= 0.1 & DMD.freq_hz <= 50 & isfinite(DMD.freq_hz);
         DMD_time  = DMD.modes_time(:, keep);
@@ -88,6 +95,7 @@ function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
         DMD_amps  = DMD.amplitudes(keep);
     else
         % ---------- 2) ICA (multi-trial fallback) ----------
+        disp(strcat("---->> ICA (multi-trial fallback)"));
         Xica = reshape(permute(X, [1 3 2]), T*K, S);
         Xica = bsxfun(@minus, Xica, mean(Xica,1));
         [~, A_ica, S_ica] = run_ica(Xica, min(opts.nICA, T-2));
@@ -95,6 +103,7 @@ function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
         IC_space = A_ica;
 
         % ---------- 3) MSSA ----------
+        disp(strcat("---->> MSSA"));
         L = min(opts.ssa_L, T-1);
         SSA = mssa_original(X, L, opts.ssa_r);
         SSA_time = reshape(SSA.U, T, []);
@@ -102,6 +111,7 @@ function out = TimeSeriesAnalysis(EEG, fs, Cortex, opts)
         SSA_sing = SSA.s;
 
         % ---------- 4) DMD ----------
+        disp(strcat("---->> DMD"));
         DMD = dmd_concat_trials(X, fs, opts.dmd_r);
         keep = DMD.freq_hz >= 0.1 & DMD.freq_hz <= 50 & imag(DMD.omega)==0;
         DMD_modes = DMD.modes(:, keep);
